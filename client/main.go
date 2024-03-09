@@ -20,6 +20,8 @@ func main() {
 	defer conn.Close()
 
 	client := pb.NewServiceClient(conn)
-	//callRequestResponse(client)
-	CallServerSideStreaming(client, &pb.NamesList{Names: []string{"Joe", "Doe"}})
+	names := &pb.NamesList{Names: []string{"Joe", "Doe"}}
+	//CallRequestResponse(client)
+	//CallServerSideStreaming(client, names)
+	CallClientSideStreaming(client, names)
 }
