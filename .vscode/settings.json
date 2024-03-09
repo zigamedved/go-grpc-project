@@ -9,6 +9,7 @@
     "protoc",
     "protoimpl",
     "protoreflect",
+    "waitc",
     "zigamedved"
   ]
 }

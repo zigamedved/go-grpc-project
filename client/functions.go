@@ -22,7 +22,7 @@ func CallRequestResponse(client pb.ServiceClient) {
 }
 
 func CallServerSideStreaming(client pb.ServiceClient, names *pb.NamesList) {
-	log.Printf("Streaming started...")
+	log.Printf("Server streaming started...")
 	stream, err := client.ServerSideStreaming(context.Background(), names)
 	if err != nil {
 		log.Fatalf("could not send names: %v", err)
@@ -39,7 +39,7 @@ func CallServerSideStreaming(client pb.ServiceClient, names *pb.NamesList) {
 		log.Println(message)
 	}
 
-	log.Printf("...streaming ended")
+	log.Printf("...server streaming ended.")
 }
 
 func CallClientSideStreaming(client pb.ServiceClient, names *pb.NamesList) {
@@ -64,6 +64,44 @@ func CallClientSideStreaming(client pb.ServiceClient, names *pb.NamesList) {
 	if err != nil {
 		log.Fatalf("Error while sending: %v", err)
 	}
-	log.Printf("...client streaming ended")
+	log.Printf("...client streaming ended.")
 	log.Printf("%v", res.Messages)
+}
+
+func CallBidirectionalStreaming(client pb.ServiceClient, names *pb.NamesList) {
+	log.Printf("Bidirectional streaming started...")
+	stream, err := client.BidirectionalStreaming(context.Background())
+	if err != nil {
+		log.Fatalf("could not send names: %v", err)
+	}
+
+	waitc := make(chan struct{})
+
+	go func() {
+		for {
+			message, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("error while streaming: %v", err)
+			}
+			log.Println(message)
+		}
+		close(waitc)
+	}()
+
+	for _, name := range names.Names {
+		req := &pb.HelloRequest{
+			Name: name,
+		}
+		if err := stream.Send(req); err != nil {
+			log.Fatalf("error while sending request: %v", err)
+		}
+		time.Sleep(2 * time.Second)
+	}
+	stream.CloseSend()
+	<-waitc
+
+	log.Printf("...bidirectional streaming ended.")
 }

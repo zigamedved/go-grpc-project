@@ -45,3 +45,23 @@ func (s *helloServer) ClientSideStreaming(stream pb.Service_ClientSideStreamingS
 		messages = append(messages, req.Name)
 	}
 }
+
+func (s *helloServer) BidirectionalStreaming(stream pb.Service_BidirectionalStreamingServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Got request with name: %v", req.Name)
+		res := &pb.HelloResponse{
+			Message: "Hey " + req.Name,
+		}
+		if err := stream.Send(res); err != nil {
+			return err
+		}
+	}
+}
